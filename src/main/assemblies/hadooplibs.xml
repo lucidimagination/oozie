@@ -26,6 +26,10 @@
     <fileSets>
         <!-- Hadoop libs -->
         <fileSet>
+            <directory>${basedir}/../hadooplibs/hadoop-1_0_2/target/hadooplibs</directory>
+            <outputDirectory>/hadooplibs</outputDirectory>
+        </fileSet>
+        <fileSet>
             <directory>${basedir}/../hadooplibs/hadoop-1_0_0/target/hadooplibs</directory>
             <outputDirectory>/hadooplibs</outputDirectory>
         </fileSet>

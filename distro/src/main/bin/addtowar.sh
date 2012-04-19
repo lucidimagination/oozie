@@ -109,7 +109,7 @@ function getHadoopJars() {
     hadoopJars="hadoop*core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar"
   else
     echo
-    echo "Exiting: Unsupported Hadoop version '${hadoopVer}', supported versions: 0.20.1, 0.20.2, 0.20.104 and 0.20.200"
+    echo "Exiting: Unsupported Hadoop version '${version}', supported versions: 0.20.1, 0.20.2, 0.20.104 and 0.20.200"
     echo
     cleanUp
     exit -1;
