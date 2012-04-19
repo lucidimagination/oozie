@@ -107,6 +107,9 @@ function getHadoopJars() {
   elif [ "${version}" = "0.20.200" ]; then
     #List is separated by ":"
     hadoopJars="hadoop*core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar"
+  elif [ "${version}" = "1.0.2" ]; then
+    #List is separated by ":"
+    hadoopJars="hadoop*core*.jar:jackson-core-asl-*.jar:jackson-mapper-asl-*.jar:commons-configuration-*.jar"
   else
     echo
     echo "Exiting: Unsupported Hadoop version '${version}', supported versions: 0.20.1, 0.20.2, 0.20.104 and 0.20.200"
