@@ -62,6 +62,7 @@ public class HadoopAccessorService implements Service {
     public static final String KERBEROS_AUTH_ENABLED = CONF_PREFIX + "kerberos.enabled";
     public static final String KERBEROS_KEYTAB = CONF_PREFIX + "keytab.file";
     public static final String KERBEROS_PRINCIPAL = CONF_PREFIX + "kerberos.principal";
+    public static final String SKIP_PROXY = CONF_PREFIX + "skip.proxy";
 
     private static final String OOZIE_HADOOP_ACCESSOR_SERVICE_CREATED = "oozie.HadoopAccessorService.created";
 
@@ -72,6 +73,7 @@ public class HadoopAccessorService implements Service {
     private Map<String, Map<String, XConfiguration>> actionConfigs = new HashMap<String, Map<String, XConfiguration>>();
 
     private ConcurrentMap<String, UserGroupInformation> userUgiMap;
+    private boolean skipProxy;
 
     public void init(Services services) throws ServiceException {
         init(services.getConf());
@@ -115,6 +117,10 @@ public class HadoopAccessorService implements Service {
 
         loadHadoopConfigs(conf);
         preLoadActionConfigs(conf);
+        skipProxy = conf.getBoolean(SKIP_PROXY, false);
+        if(skipProxy) {
+          XLog.getLog(getClass()).info("Skipping Hadoop Proxy");
+        }
     }
 
     private void kerberosInit(Configuration serviceConf) throws ServiceException {
@@ -331,15 +337,20 @@ public class HadoopAccessorService implements Service {
         String jobTracker = conf.get("mapred.job.tracker");
         validateJobTracker(jobTracker);
         try {
+          JobClient jobClient;
+          if(skipProxy) {
+            jobClient = new JobClient(conf);
+          } else {
             UserGroupInformation ugi = getUGI(user);
-            JobClient jobClient = ugi.doAs(new PrivilegedExceptionAction<JobClient>() {
+            jobClient = ugi.doAs(new PrivilegedExceptionAction<JobClient>() {
                 public JobClient run() throws Exception {
                     return new JobClient(conf);
                 }
             });
-            Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
-            conf.getCredentials().addToken(new Text("mr token"), mrdt);
-            return jobClient;
+          }
+          Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
+          conf.getCredentials().addToken(new Text("mr token"), mrdt);
+          return jobClient;
         }
         catch (InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex);
@@ -380,11 +391,15 @@ public class HadoopAccessorService implements Service {
 
         try {
             UserGroupInformation ugi = getUGI(user);
-            return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
-                public FileSystem run() throws Exception {
-                    return FileSystem.get(uri, conf);
-                }
-            });
+            if(skipProxy) {
+              return FileSystem.get(uri, conf);
+            } else {
+              return ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+                  public FileSystem run() throws Exception {
+                      return FileSystem.get(uri, conf);
+                  }
+              });
+            }
         }
         catch (InterruptedException ex) {
             throw new HadoopAccessorException(ErrorCode.E0902, ex);
@@ -426,18 +441,26 @@ public class HadoopAccessorService implements Service {
         ParamChecker.notEmpty(user, "user");
         try {
             UserGroupInformation ugi = getUGI(user);
-            ugi.doAs(new PrivilegedExceptionAction<Void>() {
-                public Void run() throws Exception {
-                    Configuration defaultConf = new Configuration();
-                    XConfiguration.copy(conf, defaultConf);
-                    //Doing this NOP add first to have the FS created and cached
-                    DistributedCache.addFileToClassPath(file, defaultConf);
+            if(skipProxy) {
+              Configuration defaultConf = new Configuration();
+              XConfiguration.copy(conf, defaultConf);
+              //Doing this NOP add first to have the FS created and cached
+              DistributedCache.addFileToClassPath(file, defaultConf);
 
-                    DistributedCache.addFileToClassPath(file, conf);
-                    return null;
-                }
-            });
+              DistributedCache.addFileToClassPath(file, conf);
+            } else {
+              ugi.doAs(new PrivilegedExceptionAction<Void>() {
+                  public Void run() throws Exception {
+                      Configuration defaultConf = new Configuration();
+                      XConfiguration.copy(conf, defaultConf);
+                      //Doing this NOP add first to have the FS created and cached
+                      DistributedCache.addFileToClassPath(file, defaultConf);
 
+                      DistributedCache.addFileToClassPath(file, conf);
+                      return null;
+                  }
+              });
+            }
         }
         catch (InterruptedException ex) {
             throw new IOException(ex);

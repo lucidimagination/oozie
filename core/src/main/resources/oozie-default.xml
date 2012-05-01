@@ -1409,6 +1409,15 @@
         </description>
     </property>
 
+    <property>
+        <name>oozie.service.HadoopAccessorService.skip.proxy</name>
+        <value>false</value>
+        <description>
+            Bypass the "doAs" hadoop proxy. Set this to true if you get a lot
+            of "User: foo is not allowed to impersonate foo" errors.
+        </description>
+    </property>
+
     <!-- Credentials -->
     <property>
         <name>oozie.credentials.credentialclasses</name>
