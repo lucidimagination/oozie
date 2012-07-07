@@ -125,5 +125,14 @@ public class ELConstantsFunctions {
             throw new RuntimeException("It should never happen");
         }
     }
+    
+    //TODOL iprovalov added for EL support of passing float numbers
+    public static String round(String input) {
+        if (input != null) {
+          Double numberDouble = new Double(input);
+          Long numberRounded = Math.round(numberDouble);
+          return numberRounded + "";
+        } else return "";
+    }
 
 }
