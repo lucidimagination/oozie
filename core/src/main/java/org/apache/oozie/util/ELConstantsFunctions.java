@@ -126,7 +126,7 @@ public class ELConstantsFunctions {
         }
     }
     
-    //TODOL iprovalov added for EL support of passing float numbers
+    //TODO iprovalov added for EL support of passing float numbers
     public static String round(String input) {
         if (input != null) {
           Double numberDouble = new Double(input);
