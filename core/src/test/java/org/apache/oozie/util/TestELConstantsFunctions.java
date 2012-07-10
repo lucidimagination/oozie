@@ -47,4 +47,19 @@ public class TestELConstantsFunctions extends XTestCase {
         assertEquals("+", ELConstantsFunctions.urlEncode(" "));
         assertEquals("%25", ELConstantsFunctions.urlEncode("%"));
     }
+    
+    public void testRound() {
+      double[] numbersLower = {2.0d, 2.1d, 2.2d, 2.4d};
+      double[] numbersUpper = {2.5d, 2.6d, 2.7d, 2.8d};
+      
+      for (double number : numbersLower) {
+        String numberRounded = ELConstantsFunctions.round(number+"");
+        assertEquals(number + "", "2", numberRounded);
+      }
+      
+      for (double number : numbersUpper) {
+        String numberRounded = ELConstantsFunctions.round(number+"");
+        assertEquals(number + "", "3", numberRounded);
+      }
+  }
 }
