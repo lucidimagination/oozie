@@ -105,5 +105,70 @@ public class TestFsELFunctions extends XFsTestCase {
         assertEquals(-1, (int) eval.evaluate("${fs:blockSize(wf:conf('file2'))}", Integer.class));
         assertTrue(eval.evaluate("${fs:blockSize(wf:conf('file1'))}", Integer.class) > 0);
     }
+    
+    
+    
+    
+    
+    
+    public void testFileSizeFunction() throws Exception {
+      String functionLower = "${fs:fileSize(concat(concat(concat(wf:conf('nameNode'), wf:conf('workingDir')), wf:conf('parentWfId')), '/behemoth-raw/part-00000')) gt 5}";
+      String functionHigher = "${fs:fileSize(concat(concat(concat(wf:conf('nameNode'), wf:conf('workingDir')), wf:conf('parentWfId')), '/behemoth-raw/part-00000')) gt 10}";
+      Services services = new Services();
+      services.init();
+      
+      String nameNodeString = getFsTestCaseDir() + "abc";
+      String workingDirString = "/wd/efg/";
+      String parentWfIdString = "123-xyz";
+      String behemothDirString = "/behemoth-raw/";
+      String testFileNameString = "part-00000";
+      String entirePathString = nameNodeString+workingDirString+parentWfIdString+behemothDirString;
+
+      Configuration protoConf = new Configuration();
+      protoConf.set(OozieClient.USER_NAME, getTestUser());
+      protoConf.set("hadoop.job.ugi", getTestUser() + "," + "group");
+
+      FileSystem fs = getFileSystem();
+      fs.mkdirs(new Path(entirePathString));
+      OutputStream os = fs.create(new Path(entirePathString, testFileNameString));
+      byte[] arr = new byte[]{2,1,2,3,4,5,6,5,1,2};
+      os.write(arr);
+      os.close();
+
+      Configuration conf = new XConfiguration();
+      conf.set(OozieClient.APP_PATH, "appPath");
+      conf.set(OozieClient.USER_NAME, getTestUser());
+
+      conf.set("nameNode", nameNodeString);
+      conf.set("workingDir", workingDirString);
+      conf.set("parentWfId", parentWfIdString);
+      
+
+      LiteWorkflowApp def =
+              new LiteWorkflowApp("name", "<workflow-app/>", new StartNodeDef("end")).addNode(new EndNodeDef("end"));
+      LiteWorkflowInstance job = new LiteWorkflowInstance(def, conf, "wfId");
+
+      WorkflowJobBean wf = new WorkflowJobBean();
+      wf.setId(job.getId());
+      wf.setAppName("name");
+      wf.setAppPath("appPath");
+      wf.setUser(getTestUser());
+      wf.setGroup("group");
+      wf.setWorkflowInstance(job);
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      protoConf.writeXml(baos);
+      wf.setProtoActionConf(baos.toString());
+
+      WorkflowActionBean action = new WorkflowActionBean();
+      action.setId("actionId");
+      action.setName("actionName");
+
+      ELEvaluator eval = Services.get().get(ELService.class).createEvaluator("workflow");
+      DagELFunctions.configureEvaluator(eval, wf, action);
+
+      assertEquals(true, (boolean) eval.evaluate(functionLower, Boolean.class));
+      assertEquals(false, (boolean) eval.evaluate(functionHigher, Boolean.class));
+
+    }
 
 }
