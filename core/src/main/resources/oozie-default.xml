@@ -438,6 +438,7 @@
             trim=org.apache.oozie.util.ELConstantsFunctions#trim,
             timestamp=org.apache.oozie.util.ELConstantsFunctions#timestamp,
             urlEncode=org.apache.oozie.util.ELConstantsFunctions#urlEncode,
+            round=org.apache.oozie.util.ELConstantsFunctions#round,
             wf:id=org.apache.oozie.DagELFunctions#wf_id,
             wf:name=org.apache.oozie.DagELFunctions#wf_name,
             wf:appPath=org.apache.oozie.DagELFunctions#wf_appPath,
